@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gacha Drop Rate Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0b0f19;
+  --bg-secondary: #111827;
+  --bg-card: rgba(22, 30, 49, 0.7);
+  --bg-input: #0e1626;
+  --border: #243049;
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --accent: #3b82f6;
+  --accent-2: #6366f1;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #fbbf24;
+  --ssr: #fbbf24;
+  --sr: #a78bfa;
+  --r: #60a5fa;
+  --n: #9ca3af;
+}
+html { font-size: 15px; }
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: radial-gradient(circle at top, #1e2942 0%, var(--bg-primary) 70%);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.container { max-width: 860px; margin: 0 auto; padding: 20px 16px 80px; }
+
+/* Header */
+header { text-align: center; padding: 36px 0 20px; }
+header h1 { font-size: 2.1rem; font-weight: 800; background: linear-gradient(135deg, var(--ssr), var(--sr), var(--r)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; }
+header p { color: var(--text-muted); font-size: 0.95rem; margin-top: 6px; }
+
+/* Sections */
+.section {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 18px;
+  animation: popin 0.4s ease both;
+}
+@keyframes popin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.section h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.section .desc { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px; }
+
+/* Inputs */
+label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 500; }
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.92rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+.grid { display: grid; gap: 12px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Buttons */
+button { font-family: inherit; cursor: pointer; border: none; border-radius: 10px; font-weight: 600; transition: transform 0.08s, filter 0.15s, background 0.15s; }
+button:active { transform: scale(0.97); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; padding: 12px 18px; font-size: 0.95rem; width: 100%; box-shadow: 0 6px 18px rgba(59,130,246,0.25); }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-secondary { background: var(--bg-input); color: var(--text); border: 1px solid var(--border); padding: 10px 14px; font-size: 0.88rem; }
+.btn-secondary:hover { border-color: var(--accent); }
+.btn-add { background: var(--success); color: #fff; padding: 10px 14px; font-size: 0.88rem; white-space: nowrap; }
+.btn-add:hover { filter: brightness(1.1); }
+.btn-icon { background: transparent; color: var(--text-muted); padding: 4px 8px; font-size: 0.85rem; border: 1px solid var(--border); }
+.btn-icon:hover { color: var(--text); border-color: var(--accent); }
+.btn-icon.danger:hover { color: var(--danger); border-color: var(--danger); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-row > * { flex: 1; min-width: 180px; }
+
+/* Rate rows */
+.rate-row { display: grid; grid-template-columns: 90px 1fr 30px; align-items: center; gap: 10px; margin-bottom: 10px; }
+.rarity-tag { font-weight: 700; font-size: 0.9rem; padding: 4px 0; }
+.rarity-tag.SSR { color: var(--ssr); }
+.rarity-tag.SR { color: var(--sr); }
+.rarity-tag.R { color: var(--r); }
+.rarity-tag.N { color: var(--n); }
+.rate-total { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--bg-input); font-weight: 600; }
+.rate-total.ok { border: 1px solid var(--success); }
+.rate-total.bad { border: 1px solid var(--danger); }
+.rate-total .val.ok { color: var(--success); }
+.rate-total .val.bad { color: var(--danger); }
+
+/* Messages */
+.msg { padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; margin-top: 12px; display: none; }
+.msg.show { display: block; animation: popin 0.25s ease both; }
+.msg.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; }
+.msg.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; }
+.msg.warn { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.4); color: #fcd34d; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+th { color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.4px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-wrap { overflow-x: auto; border-radius: 10px; }
+.empty-hint { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 18px; font-style: italic; }
+
+/* Add item form */
+.additem { display: grid; grid-template-columns: 1fr 140px auto; gap: 10px; align-items: end; }
+
+/* Toggle switch */
+.toggle-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: var(--border); border-radius: 26px; transition: 0.2s; }
+.slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
+.toggle-label { font-size: 0.9rem; font-weight: 600; }
+.toggle-label small { display: block; color: var(--text-muted); font-weight: 400; font-size: 0.78rem; }
+
+/* Result cards */
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.card { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.card .label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.card .value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+.card.ssr .value { color: var(--ssr); }
+
+/* Bar chart */
+.bars { margin-top: 8px; }
+.bar-row { margin-bottom: 14px; }
+.bar-head { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 5px; }
+.bar-track { position: relative; height: 26px; background: var(--bg-input); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill { height: 100%; border-radius: 8px 0 0 8px; transition: width 0.6s cubic-bezier(.2,.8,.2,1); display: flex; align-items: center; padding-left: 8px; font-size: 0.74rem; font-weight: 700; color: #0b0f19; }
+.bar-fill.SSR { background: var(--ssr); }
+.bar-fill.SR { background: var(--sr); }
+.bar-fill.R { background: var(--r); }
+.bar-fill.N { background: var(--n); }
+.bar-target { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; opacity: 0.8; }
+.bar-target::after { content: attr(data-label); position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; }
+
+/* Distribution chart */
+.dist { display: flex; align-items: flex-end; gap: 8px; height: 160px; margin-top: 10px; padding-top: 20px; }
+.dist-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.dist-bar { width: 100%; max-width: 52px; background: linear-gradient(180deg, var(--accent), var(--accent-2)); border-radius: 6px 6px 0 0; transition: height 0.6s cubic-bezier(.2,.8,.2,1); position: relative; min-height: 2px; }
+.dist-bar .pct { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.dist-x { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; }
+
+/* POV stat grid */
+.pov-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 4px; }
+.pov-stat { background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.pov-stat .k { font-size: 0.76rem; color: var(--text-muted); }
+.pov-stat .v { font-size: 1.2rem; font-weight: 700; margin-top: 2px; }
+.pov-stat .v.good { color: var(--success); }
+.pov-stat .v.bad { color: var(--danger); }
+.insight { margin-top: 16px; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(59,130,246,0.08)); border: 1px solid rgba(99,102,241,0.3); font-size: 0.9rem; line-height: 1.7; }
+.insight strong { color: var(--ssr); }
+
+/* History */
+.hist-list { display: grid; gap: 12px; }
+.hist-card { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: border-color 0.15s, transform 0.08s; }
+.hist-card:hover { border-color: var(--accent); }
+.hist-card:active { transform: scale(0.99); }
+.hist-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; flex-wrap: wrap; }
+.hist-title { font-weight: 600; font-size: 0.9rem; }
+.hist-meta { font-size: 0.76rem; color: var(--text-muted); }
+.badge { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.badge.pity-on { background: rgba(251,191,36,0.15); color: var(--ssr); border: 1px solid rgba(251,191,36,0.4); }
+.badge.pity-off { background: rgba(156,163,175,0.12); color: var(--text-muted); border: 1px solid var(--border); }
+.sparkline { display: flex; align-items: flex-end; gap: 2px; height: 34px; margin-top: 8px; }
+.spark-bar { flex: 1; background: var(--ssr); border-radius: 2px 2px 0 0; min-height: 1px; opacity: 0.85; }
+
+.section-foot { font-size: 0.78rem; color: var(--text-muted); margin-top: 12px; }
+.hidden { display: none !important; }
+
+/* Empty state */
+.empty-state { margin-top: 18px; padding: 30px 18px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px; font-size: 0.88rem; line-height: 1.7; }
+.empty-state .ico { font-size: 1.7rem; display: block; margin-bottom: 8px; opacity: 0.7; }
+.empty-state b { color: var(--accent); }
+
+/* Inline item edit */
+.edit-row td { background: rgba(59,130,246,0.07); }
+.inline-input, .inline-select { width: 100%; background: var(--bg-primary); border: 1px solid var(--accent); border-radius: 8px; padding: 7px 9px; color: var(--text); font-family: inherit; font-size: 0.86rem; }
+.inline-input:focus, .inline-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.18); }
+.edit-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.btn-icon.save { color: var(--success); border-color: var(--success); white-space: nowrap; }
+.btn-icon.save:hover { background: rgba(16,185,129,0.12); color: var(--success); }
+
+/* Toast */
+#toastWrap { position: fixed; top: 18px; right: 18px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: calc(100vw - 36px); }
+.toast { pointer-events: auto; min-width: 220px; max-width: 340px; padding: 12px 16px; border-radius: 12px; font-size: 0.86rem; font-weight: 600; color: #fff; box-shadow: 0 12px 32px rgba(0,0,0,0.45); display: flex; align-items: flex-start; gap: 9px; animation: toastIn 0.3s cubic-bezier(.2,.8,.2,1) both; }
+.toast.out { animation: toastOut 0.3s ease forwards; }
+.toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+.toast.error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.toast.info { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px) scale(0.96); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
+
+@media (max-width: 640px) {
+  html { font-size: 14px; }
+  .grid-4, .cards { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: 1fr; }
+  .additem { grid-template-columns: 1fr; }
+  .pov-stats { grid-template-columns: 1fr; }
+  .btn-row > * { min-width: 100%; }
+  #toastWrap { top: auto; bottom: 14px; left: 14px; right: 14px; max-width: none; }
+  .toast { max-width: none; min-width: 0; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🎴 Gacha Drop Rate Simulator</h1>
+    <p>จำลองการสุ่มกาชา วิเคราะห์อัตราดรอปจริง และโอกาสฝั่งผู้เล่นด้วย Monte Carlo</p>
+  </header>
+
+  <!-- 1. RATE SETTINGS -->
+  <section class="section">
+    <h2>📊 Rate Settings</h2>
+    <p class="desc">ตั้งค่าอัตราการสุ่มแต่ละระดับ — ผลรวมต้องเท่ากับ 100% และห้ามติดลบ</p>
+    <div id="rateRows"></div>
+    <div class="rate-total" id="rateTotalBox">
+      <span>ผลรวมทั้งหมด (Total Rate)</span>
+      <span class="val" id="rateTotal">100.00%</span>
+    </div>
+    <div class="msg" id="rateMsg"></div>
+  </section>
+
+  <!-- 2. ITEM POOL -->
+  <section class="section">
+    <h2>📦 Item Pool Management</h2>
+    <p class="desc">เพิ่ม / แก้ไข / ลบ ไอเทมหรือตัวละคร — ระดับใดที่มีอัตรา &gt; 0% ต้องมีไอเทมอย่างน้อย 1 ชิ้น</p>
+    <div class="additem">
+      <div>
+        <label for="itemName">ชื่อไอเทม / ตัวละคร</label>
+        <input type="text" id="itemName" placeholder="เช่น Aurora Blade" maxlength="60">
+      </div>
+      <div>
+        <label for="itemRarity">ระดับ (Rarity)</label>
+        <select id="itemRarity">
+          <option value="SSR">SSR</option>
+          <option value="SR">SR</option>
+          <option value="R" selected>R</option>
+          <option value="N">N</option>
+        </select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn-add" id="addItemBtn">+ Add Item</button>
+      </div>
+    </div>
+    <div class="msg" id="itemMsg"></div>
+    <div class="table-wrap" style="margin-top:16px;">
+      <table>
+        <thead><tr><th>ชื่อไอเทม</th><th style="width:90px;">ระดับ</th><th style="width:120px;text-align:right;">จัดการ</th></tr></thead>
+        <tbody id="itemTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3. PITY SYSTEM -->
+  <section class="section">
+    <h2>🎟️ Pity System</h2>
+    <p class="desc">ระบบการันตี Hard Pity — รับประกัน SSR เมื่อสุ่มครบจำนวนที่กำหนดโดยยังไม่ได้ SSR</p>
+    <div class="toggle-wrap">
+      <label class="switch"><input type="checkbox" id="pityEnabled"><span class="slider"></span></label>
+      <span class="toggle-label">เปิดใช้ Hard Pity<small>ใช้กับทั้ง Single Simulation และ Monte Carlo</small></span>
+    </div>
+    <div id="pityThresholdWrap" class="hidden" style="max-width:260px;">
+      <label for="pityThreshold">การันตี SSR ทุก ๆ (ครั้ง)</label>
+      <input type="number" id="pityThreshold" value="90" min="1" step="1">
+    </div>
+  </section>
+
+  <!-- 4. SINGLE SIMULATION -->
+  <section class="section">
+    <h2>🎲 Single Simulation</h2>
+    <p class="desc">สุ่มตามอัตราจริง — สุ่มระดับก่อน แล้วจึงสุ่มไอเทมภายในระดับนั้น</p>
+    <div class="grid grid-2">
+      <div>
+        <label for="rollCount">จำนวนครั้งที่สุ่ม (สูงสุด 100,000)</label>
+        <input type="number" id="rollCount" value="100" min="1" max="100000" step="1">
+      </div>
+      <div>
+        <label for="rollPrice">ราคาต่อครั้ง (บาท)</label>
+        <input type="number" id="rollPrice" value="30" min="0" step="0.01">
+      </div>
+    </div>
+    <button class="btn-primary" id="runSingleBtn" style="margin-top:14px;">🚀 Start Simulation</button>
+    <div class="msg" id="singleMsg"></div>
+
+    <div id="singleEmpty" class="empty-state">
+      <span class="ico">🎲</span>
+      ยังไม่ได้รันการจำลอง — ตั้งค่าจำนวนครั้งและราคา แล้วกด <b>Start Simulation</b>
+    </div>
+
+    <div id="singleResults" class="hidden" style="margin-top:20px;">
+      <div class="cards">
+        <div class="card"><div class="label">Total Rolls</div><div class="value" id="rTotal">-</div></div>
+        <div class="card"><div class="label">Total Cost</div><div class="value" id="rCost">-</div></div>
+        <div class="card ssr"><div class="label">SSR Count</div><div class="value" id="rSSR">-</div></div>
+        <div class="card"><div class="label">Most Common</div><div class="value" id="rCommon">-</div></div>
+      </div>
+
+      <h3 style="font-size:0.95rem;margin:18px 0 8px;">📋 Set Rate vs Actual</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ระดับ</th><th class="num">Set Rate</th><th class="num">Count</th><th class="num">Actual %</th></tr></thead>
+          <tbody id="compareBody"></tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:0.95rem;margin:22px 0 8px;">📈 Actual Drop Rate (เส้นขาว = อัตราที่ตั้งไว้)</h3>
+      <div class="bars" id="barChart"></div>
+
+      <h3 style="font-size:0.95rem;margin:22px 0 8px;">🎁 Item Results (เรียงจากมากไปน้อย)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ไอเทม</th><th style="width:80px;">ระดับ</th><th class="num" style="width:90px;">จำนวน</th></tr></thead>
+          <tbody id="itemResultBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. PLAYER POV SIMULATOR -->
+  <section class="section">
+    <h2>👤 Player POV Simulator (Monte Carlo)</h2>
+    <p class="desc">ป้อนงบเติมเงิน แล้วจำลองหลายรอบเพื่อดูโอกาสที่ผู้เล่นจะได้ SSR</p>
+    <div class="grid grid-3">
+      <div>
+        <label for="povBudget">งบเติมเงิน (บาท)</label>
+        <input type="number" id="povBudget" value="3000" min="0" step="1">
+      </div>
+      <div>
+        <label for="povPrice">ราคาต่อ Roll (บาท)</label>
+        <input type="number" id="povPrice" value="30" min="0.01" step="0.01">
+      </div>
+      <div>
+        <label for="povSims">จำนวน Simulation (สูงสุด 100,000)</label>
+        <input type="number" id="povSims" value="2000" min="1" max="100000" step="1">
+      </div>
+    </div>
+
+    <div class="toggle-wrap" style="margin-top:16px;">
+      <label class="switch"><input type="checkbox" id="freeEnabled"><span class="slider"></span></label>
+      <span class="toggle-label">Free Roll Rule<small>สุ่มฟรีคำนวณจาก paid rolls เท่านั้น (ฟรีไม่สร้างฟรีซ้ำ)</small></span>
+    </div>
+    <div id="freeRuleWrap" class="hidden grid grid-2">
+      <div>
+        <label for="freePaid">สุ่มจ่ายเงินครบ X ครั้ง</label>
+        <input type="number" id="freePaid" value="10" min="1" step="1">
+      </div>
+      <div>
+        <label for="freeGrant">รับสุ่มฟรี Y ครั้ง</label>
+        <input type="number" id="freeGrant" value="1" min="1" step="1">
+      </div>
+    </div>
+
+    <button class="btn-primary" id="runPovBtn" style="margin-top:16px;">🎯 Run Monte Carlo</button>
+    <div class="msg" id="povMsg"></div>
+
+    <div id="povEmpty" class="empty-state">
+      <span class="ico">👤</span>
+      ยังไม่ได้จำลองฝั่งผู้เล่น — ป้อนงบเติมเงินและจำนวนรอบ แล้วกด <b>Run Monte Carlo</b>
+    </div>
+
+    <div id="povResults" class="hidden" style="margin-top:20px;">
+      <div class="pov-stats">
+        <div class="pov-stat"><div class="k">Paid Rolls</div><div class="v" id="pPaid">-</div></div>
+        <div class="pov-stat"><div class="k">Free Rolls</div><div class="v" id="pFree">-</div></div>
+        <div class="pov-stat"><div class="k">Total Rolls / รอบ</div><div class="v" id="pTotalRolls">-</div></div>
+        <div class="pov-stat"><div class="k">Simulations</div><div class="v" id="pSims">-</div></div>
+        <div class="pov-stat"><div class="k">โอกาสได้ SSR ≥ 1</div><div class="v good" id="pAtLeast">-</div></div>
+        <div class="pov-stat"><div class="k">โอกาสได้ 0 SSR</div><div class="v bad" id="pZero">-</div></div>
+        <div class="pov-stat"><div class="k">เฉลี่ย SSR / รอบ</div><div class="v" id="pAvg">-</div></div>
+        <div class="pov-stat"><div class="k">ดีสุด / แย่สุด (SSR)</div><div class="v" id="pBestWorst">-</div></div>
+      </div>
+
+      <h3 style="font-size:0.95rem;margin:22px 0 4px;">📊 Probability Distribution (จำนวน SSR ที่ได้ต่อรอบ)</h3>
+      <div class="dist" id="distChart"></div>
+
+      <div class="insight" id="povInsight"></div>
+    </div>
+  </section>
+
+  <!-- 6. HISTORY -->
+  <section class="section">
+    <h2>📜 History</h2>
+    <p class="desc">ประวัติ Single Simulation ล่าสุด 10 รอบ — คลิกการ์ดเพื่อเรียกผลลัพธ์กลับมาดู</p>
+    <div class="btn-row" style="margin-bottom:14px;">
+      <button class="btn-secondary" id="clearHistBtn">🗑️ Reset History</button>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </section>
+
+  <!-- 7. CSV EXPORT -->
+  <section class="section">
+    <h2>📤 CSV Export</h2>
+    <p class="desc">ส่งออกเป็นไฟล์ CSV (UTF-8 BOM รองรับภาษาไทยใน Excel / Google Sheets)</p>
+    <div class="btn-row">
+      <button class="btn-secondary" id="exportPullBtn">⬇️ Export Latest Pull Results</button>
+      <button class="btn-secondary" id="exportPovBtn">⬇️ Export Player POV Summary</button>
+    </div>
+    <div class="msg" id="exportMsg"></div>
+  </section>
+
+</div>
+
+<div id="toastWrap" aria-live="polite"></div>
+
+<script>
+"use strict";
+(function () {
+  /* ---------------- State ---------------- */
+  const RARITIES = ["SSR", "SR", "R", "N"];
+  const state = {
+    rates: { SSR: 1, SR: 9, R: 30, N: 60 },
+    items: [
+      { id: 1, name: "Aurora Blade", rarity: "SSR" },
+      { id: 2, name: "Frost Mage",   rarity: "SR" },
+      { id: 3, name: "Iron Knight",  rarity: "R" },
+      { id: 4, name: "Slime",        rarity: "N" },
+    ],
+    nextItemId: 5,
+    pity: { enabled: false, threshold: 90 },
+    lastPull: null,   // { rolls:[{rollNo,rarity,item}], counts, total, cost, price, mostCommon, pityOn }
+    lastPov: null,    // POV summary object
+    history: [],      // up to 10 single-sim summaries
+    editingId: null,  // item currently being edited inline
+  };
+
+  /* ---------------- Helpers ---------------- */
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n, d = 0) => Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function showMsg(el, text, type) {
+    el.textContent = text;
+    el.className = "msg show " + type;
+  }
+  function hideMsg(el) { el.className = "msg"; }
+
+  function showToast(text, type) {
+    const wrap = $("toastWrap");
+    if (!wrap) return;
+    const t = document.createElement("div");
+    t.className = "toast " + (type || "info");
+    const icon = type === "success" ? "✅" : type === "error" ? "⚠️" : "ℹ️";
+    t.innerHTML = '<span>' + icon + '</span><span>' + esc(text) + '</span>';
+    wrap.appendChild(t);
+    setTimeout(() => {
+      t.classList.add("out");
+      setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+    }, 2600);
+  }
+  function fail(el, text) { showMsg(el, text, "error"); showToast(text, "error"); }
+
+  /* ---------------- Rate Settings ---------------- */
+  function renderRateRows() {
+    const wrap = $("rateRows");
+    wrap.innerHTML = "";
+    RARITIES.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "rate-row";
+      row.innerHTML =
+        '<span class="rarity-tag ' + r + '">' + r + '</span>' +
+        '<input type="number" min="0" step="0.01" data-rarity="' + r + '" value="' + state.rates[r] + '">' +
+        '<span style="color:var(--text-muted);text-align:center;">%</span>';
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const r = inp.dataset.rarity;
+        state.rates[r] = inp.value === "" ? 0 : parseFloat(inp.value);
+        updateRateTotal();
+      });
+    });
+    updateRateTotal();
+  }
+
+  function rateSum() {
+    return RARITIES.reduce((a, r) => a + (Number(state.rates[r]) || 0), 0);
+  }
+
+  function updateRateTotal() {
+    const sum = rateSum();
+    const box = $("rateTotalBox");
+    const val = $("rateTotal");
+    val.textContent = fmt(sum, 2) + "%";
+    const ok = Math.abs(sum - 100) < 0.001 && RARITIES.every((r) => (Number(state.rates[r]) || 0) >= 0);
+    box.className = "rate-total " + (ok ? "ok" : "bad");
+    val.className = "val " + (ok ? "ok" : "bad");
+  }
+
+  /** Returns {ok, error} */
+  function validateRates() {
+    for (const r of RARITIES) {
+      const v = Number(state.rates[r]);
+      if (isNaN(v)) return { ok: false, error: "อัตรา " + r + " ไม่ใช่ตัวเลขที่ถูกต้อง" };
+      if (v < 0) return { ok: false, error: "อัตรา " + r + " ติดลบไม่ได้" };
+    }
+    if (Math.abs(rateSum() - 100) >= 0.001)
+      return { ok: false, error: "ผลรวมอัตราต้องเท่ากับ 100% (ตอนนี้ " + fmt(rateSum(), 2) + "%)" };
+    return { ok: true };
+  }
+
+  /** Pool rule: every rarity with rate>0 needs >=1 item. Pity needs an SSR item. */
+  function validatePool() {
+    for (const r of RARITIES) {
+      if ((Number(state.rates[r]) || 0) > 0 && !state.items.some((it) => it.rarity === r))
+        return { ok: false, error: "ระดับ " + r + " มีอัตรา > 0% แต่ยังไม่มีไอเทมในคลัง" };
+    }
+    if (state.pity.enabled && !state.items.some((it) => it.rarity === "SSR"))
+      return { ok: false, error: "เปิด Pity ไว้ แต่ไม่มีไอเทมระดับ SSR ในคลัง" };
+    return { ok: true };
+  }
+
+  /* ---------------- Item Pool ---------------- */
+  function renderItems() {
+    const body = $("itemTableBody");
+    body.innerHTML = "";
+    if (state.items.length === 0) {
+      body.innerHTML = '<tr><td colspan="3" class="empty-hint">ยังไม่มีไอเทมในคลัง — เพิ่มอย่างน้อย 1 ชิ้น</td></tr>';
+      return;
+    }
+    state.items.forEach((it) => {
+      const tr = document.createElement("tr");
+      if (state.editingId === it.id) {
+        tr.className = "edit-row";
+        tr.innerHTML =
+          '<td><input type="text" class="inline-input" id="editName" value="' + esc(it.name) + '" maxlength="60"></td>' +
+          '<td><select class="inline-select" id="editRarity">' +
+            RARITIES.map((r) => '<option value="' + r + '"' + (r === it.rarity ? " selected" : "") + '>' + r + '</option>').join("") +
+          '</select></td>' +
+          '<td><div class="edit-actions">' +
+            '<button class="btn-icon save" data-save="' + it.id + '">✓ บันทึก</button>' +
+            '<button class="btn-icon" data-cancel="' + it.id + '">✕</button>' +
+          '</div></td>';
+      } else {
+        tr.innerHTML =
+          '<td>' + esc(it.name) + '</td>' +
+          '<td><span class="rarity-tag ' + it.rarity + '">' + it.rarity + '</span></td>' +
+          '<td style="text-align:right;white-space:nowrap;">' +
+            '<button class="btn-icon" data-edit="' + it.id + '">✏️</button> ' +
+            '<button class="btn-icon danger" data-del="' + it.id + '">🗑️</button>' +
+          '</td>';
+      }
+      body.appendChild(tr);
+    });
+    body.querySelectorAll("[data-del]").forEach((b) =>
+      b.addEventListener("click", () => deleteItem(parseInt(b.dataset.del, 10)))
+    );
+    body.querySelectorAll("[data-edit]").forEach((b) =>
+      b.addEventListener("click", () => beginEdit(parseInt(b.dataset.edit, 10)))
+    );
+    body.querySelectorAll("[data-save]").forEach((b) =>
+      b.addEventListener("click", () => saveEdit(parseInt(b.dataset.save, 10)))
+    );
+    body.querySelectorAll("[data-cancel]").forEach((b) =>
+      b.addEventListener("click", () => { state.editingId = null; renderItems(); })
+    );
+    const en = $("editName");
+    if (en) {
+      en.focus();
+      en.select();
+      en.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") saveEdit(state.editingId);
+        else if (e.key === "Escape") { state.editingId = null; renderItems(); }
+      });
+    }
+  }
+
+  function addItem() {
+    const name = $("itemName").value.trim();
+    const rarity = $("itemRarity").value;
+    if (!name) { fail($("itemMsg"), "กรุณากรอกชื่อไอเทม"); $("itemName").focus(); return; }
+    if (state.items.some((it) => it.name.toLowerCase() === name.toLowerCase() && it.rarity === rarity)) {
+      fail($("itemMsg"), "มีไอเทมชื่อนี้ในระดับเดียวกันอยู่แล้ว"); return;
+    }
+    state.items.push({ id: state.nextItemId++, name, rarity });
+    $("itemName").value = "";
+    hideMsg($("itemMsg"));
+    renderItems();
+    $("itemName").focus();
+    showToast('เพิ่ม "' + name + '" (' + rarity + ') แล้ว', "success");
+  }
+
+  function deleteItem(id) {
+    const it = state.items.find((x) => x.id === id);
+    if (state.editingId === id) state.editingId = null;
+    state.items = state.items.filter((x) => x.id !== id);
+    renderItems();
+    if (it) showToast('ลบ "' + it.name + '" แล้ว', "info");
+  }
+
+  function beginEdit(id) {
+    state.editingId = id;
+    renderItems();
+  }
+
+  function saveEdit(id) {
+    const it = state.items.find((x) => x.id === id);
+    if (!it) return;
+    const nameEl = $("editName");
+    if (!nameEl) return;
+    const name = nameEl.value.trim();
+    const rarity = $("editRarity").value;
+    if (!name) { fail($("itemMsg"), "ชื่อไอเทมว่างไม่ได้"); nameEl.focus(); return; }
+    if (state.items.some((x) => x.id !== id && x.name.toLowerCase() === name.toLowerCase() && x.rarity === rarity)) {
+      fail($("itemMsg"), "มีไอเทมชื่อนี้ในระดับเดียวกันอยู่แล้ว"); return;
+    }
+    it.name = name;
+    it.rarity = rarity;
+    state.editingId = null;
+    hideMsg($("itemMsg"));
+    renderItems();
+    showToast("บันทึกการแก้ไขแล้ว", "success");
+  }
+
+  /* ---------------- Core RNG ---------------- */
+  // Build cumulative upper-bounds over 0..100 in fixed rarity order.
+  function buildCumulative() {
+    let acc = 0;
+    return RARITIES.map((r) => { acc += Number(state.rates[r]) || 0; return { rarity: r, upper: acc }; });
+  }
+
+  function pickRarity(cum) {
+    const x = Math.random() * 100;
+    for (let i = 0; i < cum.length; i++) if (x < cum[i].upper) return cum[i].rarity;
+    return cum[cum.length - 1].rarity;
+  }
+
+  function pickItem(rarity) {
+    const pool = state.items.filter((it) => it.rarity === rarity);
+    if (pool.length === 0) return "(ไม่มีไอเทมในคลัง)";
+    return pool[(Math.random() * pool.length) | 0].name;
+  }
+
+  /* ---------------- Single Simulation ---------------- */
+  function runSingle() {
+    hideMsg($("singleMsg"));
+    const rv = validateRates();
+    if (!rv.ok) { fail($("singleMsg"), rv.error); return; }
+    const pv = validatePool();
+    if (!pv.ok) { fail($("singleMsg"), pv.error); return; }
+
+    const n = parseInt($("rollCount").value, 10);
+    const price = parseFloat($("rollPrice").value);
+    if (!Number.isFinite(n) || n <= 0) { fail($("singleMsg"), "จำนวนครั้งต้องมากกว่า 0"); return; }
+    if (n > 100000) { fail($("singleMsg"), "จำนวนครั้งต้องไม่เกิน 100,000"); return; }
+    if (!Number.isFinite(price) || price < 0) { fail($("singleMsg"), "ราคาต่อครั้งต้องไม่ติดลบ"); return; }
+
+    const cum = buildCumulative();
+    const counts = { SSR: 0, SR: 0, R: 0, N: 0 };
+    const itemCounts = {}; // "rarity name" -> count
+    const rolls = new Array(n);
+    let pityCounter = 0;
+    const pityOn = state.pity.enabled;
+    const thr = state.pity.threshold;
+
+    for (let i = 0; i < n; i++) {
+      let rarity;
+      if (pityOn && thr > 0 && pityCounter + 1 >= thr) rarity = "SSR";
+      else rarity = pickRarity(cum);
+      pityCounter = rarity === "SSR" ? 0 : pityCounter + 1;
+      counts[rarity]++;
+      const item = pickItem(rarity);
+      const key = rarity + " " + item;
+      itemCounts[key] = (itemCounts[key] || 0) + 1;
+      rolls[i] = { rollNo: i + 1, rarity, item };
+    }
+
+    let mostCommon = "SSR", best = -1;
+    for (const r of RARITIES) if (counts[r] > best) { best = counts[r]; mostCommon = r; }
+
+    state.lastPull = {
+      rolls, counts, total: n, cost: n * price, price, mostCommon, pityOn,
+      itemCounts, ratesSnapshot: { ...state.rates }, time: new Date(),
+    };
+
+    renderSingle(state.lastPull);
+    pushHistory(state.lastPull);
+    showToast("จำลองเสร็จ — SSR " + fmt(state.lastPull.counts.SSR) + " ครั้ง จาก " + fmt(n) + " รอบ", "success");
+  }
+
+  function renderSingle(res) {
+    $("singleResults").classList.remove("hidden");
+    $("singleEmpty").classList.add("hidden");
+    $("rTotal").textContent = fmt(res.total);
+    $("rCost").textContent = "฿" + fmt(res.cost, 2);
+    $("rSSR").textContent = fmt(res.counts.SSR);
+    $("rCommon").textContent = res.mostCommon;
+
+    // compare table
+    const cb = $("compareBody");
+    cb.innerHTML = "";
+    RARITIES.forEach((r) => {
+      const actual = res.total ? (res.counts[r] / res.total) * 100 : 0;
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><span class="rarity-tag ' + r + '">' + r + '</span></td>' +
+        '<td class="num">' + fmt(res.ratesSnapshot[r], 2) + '%</td>' +
+        '<td class="num">' + fmt(res.counts[r]) + '</td>' +
+        '<td class="num">' + fmt(actual, 2) + '%</td>';
+      cb.appendChild(tr);
+    });
+
+    // bar chart
+    const bc = $("barChart");
+    bc.innerHTML = "";
+    const maxPct = Math.max(1, ...RARITIES.map((r) => (res.counts[r] / res.total) * 100), ...RARITIES.map((r) => res.ratesSnapshot[r]));
+    RARITIES.forEach((r) => {
+      const actual = res.total ? (res.counts[r] / res.total) * 100 : 0;
+      const setRate = Number(res.ratesSnapshot[r]) || 0;
+      const widthPct = (actual / maxPct) * 100;
+      const targetPct = (setRate / maxPct) * 100;
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML =
+        '<div class="bar-head"><span class="rarity-tag ' + r + '">' + r + '</span>' +
+          '<span style="color:var(--text-muted)">จริง ' + fmt(actual, 2) + '% / ตั้งไว้ ' + fmt(setRate, 2) + '%</span></div>' +
+        '<div class="bar-track">' +
+          '<div class="bar-fill ' + r + '" style="width:' + widthPct.toFixed(2) + '%">' + (actual >= 3 ? fmt(actual, 1) + '%' : '') + '</div>' +
+          '<div class="bar-target" style="left:' + targetPct.toFixed(2) + '%" data-label="set"></div>' +
+        '</div>';
+      bc.appendChild(row);
+    });
+
+    // item results
+    const ib = $("itemResultBody");
+    ib.innerHTML = "";
+    const entries = Object.entries(res.itemCounts).map(([k, c]) => {
+      const [rarity, name] = k.split(" ");
+      return { rarity, name, count: c };
+    }).sort((a, b) => b.count - a.count);
+    if (entries.length === 0) {
+      ib.innerHTML = '<tr><td colspan="3" class="empty-hint">ไม่มีข้อมูล</td></tr>';
+    } else {
+      entries.forEach((e) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td>' + esc(e.name) + '</td>' +
+          '<td><span class="rarity-tag ' + e.rarity + '">' + e.rarity + '</span></td>' +
+          '<td class="num">' + fmt(e.count) + '</td>';
+        ib.appendChild(tr);
+      });
+    }
+    $("singleResults").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  /* ---------------- Player POV (Monte Carlo) ---------------- */
+  function runPov() {
+    hideMsg($("povMsg"));
+    const rv = validateRates();
+    if (!rv.ok) { fail($("povMsg"), rv.error); return; }
+    const pv = validatePool();
+    if (!pv.ok) { fail($("povMsg"), pv.error); return; }
+
+    const budget = parseFloat($("povBudget").value);
+    const price = parseFloat($("povPrice").value);
+    const sims = parseInt($("povSims").value, 10);
+    if (!Number.isFinite(budget) || budget < 0) { fail($("povMsg"), "งบเติมเงินต้องไม่ติดลบ"); return; }
+    if (!Number.isFinite(price) || price <= 0) { fail($("povMsg"), "ราคาต่อ Roll ต้องมากกว่า 0"); return; }
+    if (!Number.isFinite(sims) || sims <= 0) { fail($("povMsg"), "จำนวน Simulation ต้องมากกว่า 0"); return; }
+    if (sims > 100000) { fail($("povMsg"), "จำนวน Simulation ต้องไม่เกิน 100,000"); return; }
+
+    const freeOn = $("freeEnabled").checked;
+    const freePaid = parseInt($("freePaid").value, 10);
+    const freeGrant = parseInt($("freeGrant").value, 10);
+    if (freeOn && (!Number.isFinite(freePaid) || freePaid <= 0 || !Number.isFinite(freeGrant) || freeGrant <= 0)) {
+      fail($("povMsg"), "ค่า Free Roll Rule ต้องเป็นจำนวนเต็มบวก"); return;
+    }
+
+    const paidRolls = Math.floor(budget / price);
+    // Free rolls derived from paid rolls ONLY; free rolls never generate more free rolls.
+    const freeRolls = freeOn ? Math.floor(paidRolls / freePaid) * freeGrant : 0;
+    const totalRolls = paidRolls + freeRolls;
+
+    if (totalRolls <= 0) { fail($("povMsg"), "งบไม่พอสำหรับการสุ่มแม้แต่ครั้งเดียว"); return; }
+
+    const cum = buildCumulative();
+    const pityOn = state.pity.enabled, thr = state.pity.threshold;
+    const dist = [0, 0, 0, 0, 0, 0]; // 0,1,2,3,4,5+
+    let totalSSR = 0, atLeastOne = 0, bestSSR = 0, worstSSR = Infinity;
+
+    for (let s = 0; s < sims; s++) {
+      let pityCounter = 0, ssr = 0;
+      for (let i = 0; i < totalRolls; i++) {
+        let isSSR;
+        if (pityOn && thr > 0 && pityCounter + 1 >= thr) { isSSR = true; }
+        else { isSSR = Math.random() * 100 < cum[0].upper; } // cum[0] is SSR upper bound
+        pityCounter = isSSR ? 0 : pityCounter + 1;
+        if (isSSR) ssr++;
+      }
+      totalSSR += ssr;
+      if (ssr >= 1) atLeastOne++;
+      if (ssr > bestSSR) bestSSR = ssr;
+      if (ssr < worstSSR) worstSSR = ssr;
+      dist[Math.min(ssr, 5)]++;
+    }
+
+    const chanceAtLeast = (atLeastOne / sims) * 100;
+    const chanceZero = 100 - chanceAtLeast;
+    const avgSSR = totalSSR / sims;
+
+    state.lastPov = {
+      budget, price, sims, freeOn, freePaid, freeGrant,
+      paidRolls, freeRolls, totalRolls,
+      chanceAtLeast, chanceZero, avgSSR,
+      bestSSR, worstSSR: worstSSR === Infinity ? 0 : worstSSR,
+      dist: dist.slice(), pityOn, ssrRate: cum[0].upper, time: new Date(),
+    };
+    renderPov(state.lastPov);
+    showToast("Monte Carlo เสร็จ — โอกาสได้ SSR ≥1 ราว " + fmt(chanceAtLeast, 1) + "%", "success");
+  }
+
+  function renderPov(p) {
+    $("povResults").classList.remove("hidden");
+    $("povEmpty").classList.add("hidden");
+    $("pPaid").textContent = fmt(p.paidRolls);
+    $("pFree").textContent = fmt(p.freeRolls);
+    $("pTotalRolls").textContent = fmt(p.totalRolls);
+    $("pSims").textContent = fmt(p.sims);
+    $("pAtLeast").textContent = fmt(p.chanceAtLeast, 2) + "%";
+    $("pZero").textContent = fmt(p.chanceZero, 2) + "%";
+    $("pAvg").textContent = fmt(p.avgSSR, 3);
+    $("pBestWorst").textContent = fmt(p.bestSSR) + " / " + fmt(p.worstSSR);
+
+    const dc = $("distChart");
+    dc.innerHTML = "";
+    const maxCount = Math.max(1, ...p.dist);
+    const labels = ["0", "1", "2", "3", "4", "5+"];
+    p.dist.forEach((c, i) => {
+      const pct = (c / p.sims) * 100;
+      const h = (c / maxCount) * 100;
+      const col = document.createElement("div");
+      col.className = "dist-col";
+      col.innerHTML =
+        '<div class="dist-bar" style="height:' + h.toFixed(1) + '%"><span class="pct">' + fmt(pct, 1) + '%</span></div>' +
+        '<div class="dist-x">' + labels[i] + '</div>';
+      dc.appendChild(col);
+    });
+
+    // Insight
+    let verdict;
+    if (p.chanceAtLeast >= 90) verdict = "ถือว่า<strong>คุ้มค่ามาก</strong> — เกือบการันตีได้ SSR";
+    else if (p.chanceAtLeast >= 65) verdict = "ถือว่า<strong>โอกาสดี</strong> แต่ยังมีลุ้นพลาดอยู่บ้าง";
+    else if (p.chanceAtLeast >= 40) verdict = "ถือว่า<strong>ครึ่ง ๆ กลาง ๆ</strong> ควรเผื่อใจหรือเพิ่มงบ";
+    else verdict = "ถือว่า<strong>เสี่ยงสูง</strong> โอกาสพลาด SSR ค่อนข้างมาก";
+
+    $("povInsight").innerHTML =
+      "💡 เติม <strong>฿" + fmt(p.budget, 2) + "</strong> (ราคา ฿" + fmt(p.price, 2) + "/roll) " +
+      "ได้สุ่มจ่ายเงิน <strong>" + fmt(p.paidRolls) + "</strong> ครั้ง" +
+      (p.freeOn ? " + ฟรี <strong>" + fmt(p.freeRolls) + "</strong> ครั้ง" : "") +
+      " รวม <strong>" + fmt(p.totalRolls) + "</strong> ครั้ง/รอบ<br>" +
+      "จากการจำลอง <strong>" + fmt(p.sims) + "</strong> รอบ มีโอกาสได้ SSR อย่างน้อย 1 ตัว ประมาณ <strong>" + fmt(p.chanceAtLeast, 1) + "%</strong> " + verdict + "<br>" +
+      "โดยเฉลี่ยได้ราว <strong>" + fmt(p.avgSSR, 2) + "</strong> SSR ต่อรอบ" +
+      (p.pityOn ? " (เปิดระบบ Pity)" : "") + ".";
+
+    $("povResults").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  /* ---------------- History ---------------- */
+  function buildSparkline(rolls) {
+    const buckets = Math.min(24, rolls.length);
+    const arr = new Array(buckets).fill(0);
+    const per = rolls.length / buckets;
+    rolls.forEach((r, idx) => { if (r.rarity === "SSR") arr[Math.min(buckets - 1, Math.floor(idx / per))]++; });
+    return arr;
+  }
+
+  function pushHistory(res) {
+    state.history.unshift({
+      total: res.total, cost: res.cost, price: res.price, counts: { ...res.counts },
+      mostCommon: res.mostCommon, pityOn: res.pityOn, time: res.time,
+      spark: buildSparkline(res.rolls),
+      // keep full data so a restored entry can also be re-exported / re-rendered
+      rolls: res.rolls, itemCounts: res.itemCounts, ratesSnapshot: res.ratesSnapshot,
+    });
+    if (state.history.length > 10) state.history.length = 10;
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = $("histList");
+    list.innerHTML = "";
+    if (state.history.length === 0) {
+      list.innerHTML = '<div class="empty-hint">ยังไม่มีประวัติ — รัน Single Simulation เพื่อบันทึก</div>';
+      return;
+    }
+    state.history.forEach((h, idx) => {
+      const card = document.createElement("div");
+      card.className = "hist-card";
+      const t = h.time instanceof Date ? h.time : new Date(h.time);
+      const maxSpark = Math.max(1, ...h.spark);
+      const spark = h.spark.map((v) => '<div class="spark-bar" style="height:' + ((v / maxSpark) * 100).toFixed(0) + '%"></div>').join("");
+      card.innerHTML =
+        '<div class="hist-top">' +
+          '<span class="hist-title">' + fmt(h.total) + ' rolls · SSR ' + fmt(h.counts.SSR) + ' · ฿' + fmt(h.cost, 2) + '</span>' +
+          '<span class="badge ' + (h.pityOn ? "pity-on" : "pity-off") + '">' + (h.pityOn ? "Pity ON" : "Pity OFF") + '</span>' +
+        '</div>' +
+        '<div class="hist-meta">' + t.toLocaleString("th-TH") + ' · most common: ' + h.mostCommon + '</div>' +
+        '<div class="sparkline">' + spark + '</div>';
+      card.addEventListener("click", () => restoreHistory(idx));
+      list.appendChild(card);
+    });
+  }
+
+  function restoreHistory(idx) {
+    const h = state.history[idx];
+    if (!h) return;
+    state.lastPull = {
+      rolls: h.rolls, counts: h.counts, total: h.total, cost: h.cost, price: h.price,
+      mostCommon: h.mostCommon, pityOn: h.pityOn, itemCounts: h.itemCounts,
+      ratesSnapshot: h.ratesSnapshot, time: h.time,
+    };
+    renderSingle(state.lastPull);
+    showToast("เรียกคืนผลลัพธ์จากประวัติแล้ว", "info");
+  }
+
+  /* ---------------- CSV Export ---------------- */
+  function downloadCSV(filename, rows) {
+    const csv = rows.map((row) =>
+      row.map((cell) => {
+        const s = String(cell == null ? "" : cell);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(",")
+    ).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportPull() {
+    hideMsg($("exportMsg"));
+    const p = state.lastPull;
+    if (!p) { fail($("exportMsg"), "ยังไม่มีผล Single Simulation ให้ส่งออก"); return; }
+    const rows = [];
+    rows.push(["Gacha Drop Rate Simulator - Latest Pull Results"]);
+    rows.push(["Generated", (p.time instanceof Date ? p.time : new Date(p.time)).toLocaleString("th-TH")]);
+    rows.push([]);
+    rows.push(["Total Rolls", p.total]);
+    rows.push(["Price / Roll (THB)", p.price]);
+    rows.push(["Total Cost (THB)", p.cost]);
+    rows.push(["Pity", p.pityOn ? "ON" : "OFF"]);
+    rows.push(["Most Common Rarity", p.mostCommon]);
+    rows.push([]);
+    rows.push(["Rarity", "Set Rate %", "Count", "Actual %"]);
+    RARITIES.forEach((r) => rows.push([r, p.ratesSnapshot[r], p.counts[r], p.total ? ((p.counts[r] / p.total) * 100).toFixed(4) : 0]));
+    rows.push([]);
+    rows.push(["Roll No.", "Rarity", "Item Name"]);
+    p.rolls.forEach((r) => rows.push([r.rollNo, r.rarity, r.item]));
+    downloadCSV("gacha-latest-pull.csv", rows);
+    hideMsg($("exportMsg"));
+    showToast("ส่งออก Latest Pull Results (CSV) แล้ว", "success");
+  }
+
+  function exportPov() {
+    hideMsg($("exportMsg"));
+    const p = state.lastPov;
+    if (!p) { fail($("exportMsg"), "ยังไม่มีผล Player POV ให้ส่งออก"); return; }
+    const rows = [];
+    rows.push(["Gacha Drop Rate Simulator - Player POV Summary"]);
+    rows.push(["Generated", (p.time instanceof Date ? p.time : new Date(p.time)).toLocaleString("th-TH")]);
+    rows.push([]);
+    rows.push(["Budget (THB)", p.budget]);
+    rows.push(["Price / Roll (THB)", p.price]);
+    rows.push(["Paid Rolls", p.paidRolls]);
+    rows.push(["Free Roll Rule", p.freeOn ? ("ON (every " + p.freePaid + " paid -> " + p.freeGrant + " free)") : "OFF"]);
+    rows.push(["Free Rolls", p.freeRolls]);
+    rows.push(["Total Rolls / Run", p.totalRolls]);
+    rows.push(["Simulations", p.sims]);
+    rows.push(["Pity", p.pityOn ? "ON" : "OFF"]);
+    rows.push(["SSR Set Rate %", p.ssrRate]);
+    rows.push([]);
+    rows.push(["Chance >= 1 SSR (%)", p.chanceAtLeast.toFixed(4)]);
+    rows.push(["Chance 0 SSR (%)", p.chanceZero.toFixed(4)]);
+    rows.push(["Average SSR / Run", p.avgSSR.toFixed(4)]);
+    rows.push(["Best SSR", p.bestSSR]);
+    rows.push(["Worst SSR", p.worstSSR]);
+    rows.push([]);
+    rows.push(["SSR Count", "Runs", "Probability %"]);
+    ["0", "1", "2", "3", "4", "5+"].forEach((lbl, i) =>
+      rows.push([lbl, p.dist[i], ((p.dist[i] / p.sims) * 100).toFixed(4)])
+    );
+    downloadCSV("gacha-player-pov.csv", rows);
+    hideMsg($("exportMsg"));
+    showToast("ส่งออก Player POV Summary (CSV) แล้ว", "success");
+  }
+
+  /* ---------------- Wire up ---------------- */
+  function init() {
+    renderRateRows();
+    renderItems();
+    renderHistory();
+
+    $("addItemBtn").addEventListener("click", addItem);
+    $("itemName").addEventListener("keydown", (e) => { if (e.key === "Enter") addItem(); });
+
+    $("pityEnabled").addEventListener("change", (e) => {
+      state.pity.enabled = e.target.checked;
+      $("pityThresholdWrap").classList.toggle("hidden", !e.target.checked);
+    });
+    $("pityThreshold").addEventListener("input", (e) => {
+      const v = parseInt(e.target.value, 10);
+      state.pity.threshold = Number.isFinite(v) && v > 0 ? v : 0;
+    });
+
+    $("runSingleBtn").addEventListener("click", runSingle);
+    $("runPovBtn").addEventListener("click", runPov);
+
+    $("freeEnabled").addEventListener("change", (e) => {
+      $("freeRuleWrap").classList.toggle("hidden", !e.target.checked);
+    });
+
+    $("clearHistBtn").addEventListener("click", () => {
+      if (state.history.length === 0) { showToast("ยังไม่มีประวัติให้ล้าง", "info"); return; }
+      state.history = [];
+      renderHistory();
+      showToast("ล้างประวัติแล้ว", "info");
+    });
+
+    $("exportPullBtn").addEventListener("click", exportPull);
+    $("exportPovBtn").addEventListener("click", exportPov);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>
